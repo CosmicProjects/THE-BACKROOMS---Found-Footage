@@ -1,0 +1,532 @@
+/* Reset and Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #050500;
+    font-family: 'Share Tech Mono', monospace;
+    color: #dfdfd0;
+}
+
+/* Game Canvas Container */
+#game-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+#game-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    image-rendering: pixelated; /* Crisp retro scaling for canvas upscaling */
+    image-rendering: crisp-edges;
+}
+
+/* VHS found-footage effect layers */
+#vhs-overlay {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    pointer-events: none; /* Let clicks pass through to standard handlers */
+}
+
+/* Noise overlay canvas */
+#noise-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.08;
+    z-index: 11;
+}
+
+/* Vignette Shadow Effect */
+.vignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.85) 100%);
+    z-index: 12;
+}
+
+/* CRT Scanlines */
+.scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+    );
+    background-size: 100% 4px;
+    z-index: 13;
+}
+
+/* Camcorder HUD container */
+.hud-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 15;
+}
+
+/* Top and Bottom Sections */
+.hud-top-left, .hud-top-right, .hud-bottom-left, .hud-bottom-right {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hud-top-left, .hud-top-right {
+    position: absolute;
+    top: 40px;
+}
+
+.hud-top-left {
+    left: 40px;
+}
+
+.hud-top-right {
+    right: 40px;
+    align-items: flex-end;
+}
+
+.hud-bottom-left, .hud-bottom-right {
+    position: absolute;
+    bottom: 40px;
+}
+
+.hud-bottom-left {
+    left: 40px;
+}
+
+.hud-bottom-right {
+    right: 40px;
+    align-items: flex-end;
+}
+
+/* Eerie Glow for retro VHS text */
+.vhs-text {
+    font-size: 24px;
+    color: #e5e5d8;
+    text-shadow: 0 0 2px rgba(229, 229, 216, 0.5), 1px 1px 0px rgba(255, 0, 0, 0.5), -1px -1px 0px rgba(0, 0, 255, 0.5);
+    letter-spacing: 2px;
+}
+
+/* Recording blinker */
+.rec-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #e5e5d8;
+    text-shadow: 0 0 2px rgba(229, 229, 216, 0.5);
+}
+
+.rec-dot {
+    width: 16px;
+    height: 16px;
+    background-color: #ff2222;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #ff0000;
+    animation: blink 1s infinite steps(1, start);
+}
+
+.vhs-mode {
+    font-size: 20px;
+    color: #e5e5d8;
+    letter-spacing: 1px;
+}
+
+/* Flashlight Battery Bar styling */
+.battery-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    color: #e5e5d8;
+}
+
+.battery-shell {
+    width: 60px;
+    height: 20px;
+    border: 2px solid #e5e5d8;
+    padding: 2px;
+    position: relative;
+}
+
+.battery-shell::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 4px;
+    width: 4px;
+    height: 8px;
+    background-color: #e5e5d8;
+}
+
+.battery-bar {
+    height: 100%;
+    background-color: #00ff66;
+    box-shadow: 0 0 5px #00ff66;
+    transition: width 0.3s ease, background-color 0.5s ease;
+}
+
+.battery-bar.low {
+    background-color: #ff3333;
+    box-shadow: 0 0 5px #ff3333;
+    animation: battery-blink 0.8s infinite alternate;
+}
+
+/* Full Screen Glitch Screen Filter overlay */
+#glitch-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 0, 0, 0);
+    z-index: 20;
+    pointer-events: none;
+}
+
+/* Glitch Animation states */
+.glitching {
+    animation: screen-shake 0.15s infinite, color-glitch 0.2s infinite;
+}
+
+/* Eerie Menus & overlays setup */
+.menu-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent; /* Transparent to let 3D animated background show */
+    z-index: 9; /* Rendered under HUD so scanlines and HUD details are overlayed */
+    display: flex;
+    justify-content: flex-start; /* Place menu sidebar on the left */
+    align-items: stretch; /* Stretch full height */
+    padding: 0;
+    transition: opacity 1s ease, visibility 1s ease;
+}
+
+.menu-container.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.menu-content {
+    width: 500px;
+    max-width: 100%;
+    height: 100%;
+    text-align: left;
+    border: none;
+    border-right: 2px solid rgba(229, 229, 216, 0.1);
+    padding: 80px 50px;
+    background: linear-gradient(to right, rgba(10, 10, 5, 0.95) 75%, rgba(10, 10, 5, 0.7) 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 15px 0 45px rgba(0, 0, 0, 0.95);
+    position: relative;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Override for Game Over Screen to keep it centered and full-bleed glitched out */
+#game-over-screen {
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(5, 5, 0, 0.98); /* Almost full dark black */
+    backdrop-filter: none;
+    padding: 20px;
+}
+
+#game-over-screen .menu-content {
+    width: 100%;
+    max-width: 650px;
+    height: auto;
+    text-align: center;
+    align-items: center;
+    border: 2px solid #551111;
+    padding: 50px 40px;
+    background-color: #0d0505;
+    box-shadow: 0 0 40px rgba(255, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+/* Retro CRT static glow inside menus */
+.menu-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 3px, 3px 100%;
+    pointer-events: none;
+}
+
+.menu-title {
+    font-family: 'VT323', monospace;
+    font-size: 72px;
+    letter-spacing: 5px;
+    color: #e5e5d8;
+    margin-bottom: 5px;
+    text-shadow: 0 0 10px rgba(229, 229, 216, 0.5), 3px 3px 0px rgba(255, 0, 0, 0.6), -3px -3px 0px rgba(0, 0, 255, 0.6);
+    animation: title-glow 3s infinite alternate;
+}
+
+@keyframes title-glow {
+    0% {
+        text-shadow: 0 0 10px rgba(229, 229, 216, 0.4), 2px 2px 0px rgba(255, 0, 0, 0.4), -2px -2px 0px rgba(0, 0, 255, 0.4);
+    }
+    100% {
+        text-shadow: 0 0 20px rgba(229, 229, 216, 0.8), 4px 4px 0px rgba(255, 0, 0, 0.7), -4px -4px 0px rgba(0, 0, 255, 0.7);
+    }
+}
+
+.menu-subtitle {
+    font-size: 20px;
+    letter-spacing: 12px;
+    color: #999980;
+    margin-bottom: 40px;
+    text-shadow: 0 0 5px rgba(153, 153, 128, 0.3);
+    text-indent: 12px;
+}
+
+.menu-description {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #b0b095;
+    margin-bottom: 40px;
+    text-align: left;
+}
+
+/* Control guide sidebar layout */
+.control-guide {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 40px;
+    text-align: left;
+    max-width: 400px;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.guide-item {
+    font-size: 16px;
+    color: #e5e5d8;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.guide-item span {
+    display: inline-block;
+    padding: 4px 10px;
+    border: 1px solid #777760;
+    background-color: #1a1a10;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: bold;
+    min-width: 60px;
+    text-align: center;
+    box-shadow: 0 2px 0 #555540;
+}
+
+/* Headphones Warnings Box */
+.warning-box {
+    font-size: 13px;
+    color: #ffaa33;
+    border: 1px dashed #ffaa33;
+    padding: 12px 20px;
+    background-color: rgba(255, 170, 51, 0.05);
+    margin-bottom: 40px;
+    letter-spacing: 0.5px;
+}
+
+/* Buttons style */
+.start-button {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #0d0d08;
+    background-color: #e5e5d8;
+    border: none;
+    padding: 15px 40px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #999980, 0 10px 20px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    max-width: 320px;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+}
+
+.start-button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: all 0.6s ease;
+}
+
+.start-button:hover::after {
+    left: 100%;
+}
+
+.start-button:hover {
+    background-color: #fffae6;
+    transform: translateY(1px);
+    box-shadow: 0 3px 0 #999980, 0 8px 15px rgba(0, 0, 0, 0.5);
+}
+
+.start-button:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+/* Game over styles */
+.signal-lost-title {
+    font-family: 'VT323', monospace;
+    font-size: 72px;
+    color: #ff3333;
+    text-shadow: 0 0 15px rgba(255, 51, 51, 0.6), 3px 3px 0px rgba(255, 255, 255, 0.4);
+    margin-bottom: 10px;
+    animation: word-flicker 1.5s infinite;
+}
+
+.error-code {
+    font-size: 15px;
+    color: #ff8888;
+    letter-spacing: 4px;
+    margin-bottom: 30px;
+}
+
+.static-bar {
+    width: 100%;
+    height: 6px;
+    background: repeating-linear-gradient(90deg, #111, #111 2px, #fff 2px, #fff 4px);
+    opacity: 0.3;
+    margin-bottom: 30px;
+    animation: static-move 0.5s infinite linear;
+}
+
+/* Animations */
+@keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+
+@keyframes battery-blink {
+    from { opacity: 1; }
+    to { opacity: 0.3; }
+}
+
+@keyframes static-move {
+    from { background-position: 0 0; }
+    to { background-position: 100px 0; }
+}
+
+@keyframes word-flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+    20%, 24%, 55% { opacity: 0.3; }
+    22% { opacity: 0.7; }
+}
+
+@keyframes screen-shake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(-3px, 2px) rotate(-0.5deg); }
+    40% { transform: translate(3px, -1px) rotate(0.5deg); }
+    60% { transform: translate(-2px, -2px) rotate(-0.3deg); }
+    80% { transform: translate(2px, 3px) rotate(0.3deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes color-glitch {
+    0% { filter: hue-rotate(0deg) contrast(1.1); }
+    30% { filter: hue-rotate(90deg) contrast(1.4) saturate(1.5); }
+    60% { filter: hue-rotate(180deg) invert(0.05); }
+    90% { filter: hue-rotate(270deg) contrast(0.9); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+/* Responsive Scaling */
+@media(max-width: 600px) {
+    .hud-container {
+        padding: 20px;
+    }
+    .vhs-text, .rec-indicator {
+        font-size: 16px;
+    }
+    .menu-title {
+        font-size: 48px;
+    }
+    .signal-lost-title {
+        font-size: 48px;
+    }
+    .menu-container {
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+        background-color: rgba(5, 5, 0, 0.85); /* Slightly darker backplane overlay for mobile readability */
+        backdrop-filter: blur(4px);
+    }
+    .menu-content {
+        width: 100%;
+        height: auto;
+        border: 2px solid rgba(229, 229, 216, 0.15);
+        background: rgba(10, 10, 5, 0.95);
+        padding: 35px 20px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.95);
+        text-align: center;
+        align-items: center;
+        justify-content: center;
+    }
+    .menu-description {
+        text-align: center;
+    }
+    .control-guide {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}

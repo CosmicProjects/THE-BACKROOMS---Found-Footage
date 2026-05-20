@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE BACKROOMS - Found Footage</title>
+    <link rel="stylesheet" href="css/style.css?v=1.0.6">
+    <!-- Google Fonts for retro/camcorder look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+    <!-- Include Three.js via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <!-- Main Game Container -->
+    <div id="game-container">
+        <!-- Canvas will be inserted here dynamically -->
+    </div>
+
+    <!-- VHS Found Footage Overlays -->
+    <div id="vhs-overlay" class="vhs-effect">
+
+        <!-- Camcorder Viewfinder HUD -->
+        <div class="hud-container">
+            <div class="hud-top-left">
+                <div class="rec-indicator">
+                    <span class="rec-dot"></span>
+                    <span>REC</span>
+                </div>
+                <div class="vhs-mode">PLAY</div>
+            </div>
+            
+            <div class="hud-top-right">
+                <div class="battery-indicator">
+                    <span>FLASHLIGHT</span>
+                    <div class="battery-shell">
+                        <div id="battery-level" class="battery-bar" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-bottom-left">
+                <div id="vhs-time" class="vhs-text">00:00:00</div>
+                <div class="vhs-text">SP</div>
+            </div>
+
+            <div class="hud-bottom-right">
+                <div id="vhs-date" class="vhs-text">MAY 19 2026</div>
+                <div class="vhs-text">F/1.8</div>
+            </div>
+            
+            <!-- Vignette visual vignette -->
+            <div class="vignette"></div>
+            <!-- Interlacing scanlines overlay -->
+            <div class="scanlines"></div>
+        </div>
+    </div>
+
+    <!-- Screen Glitch overlay for panic states -->
+    <div id="glitch-overlay"></div>
+
+    <!-- Start / Main Menu Screen -->
+    <div id="menu-screen" class="menu-container">
+        <div class="menu-content">
+            <h1 class="menu-title">THE BACKROOMS</h1>
+            <h2 class="menu-subtitle">FOUND FOOTAGE</h2>
+            
+            <p class="menu-description">
+                You fell out of reality. You are trapped in an infinite labyrinth of yellow wallpaper, moist carpet, and fluorescent hum. 
+                Find a way, or let it find you.
+            </p>
+
+            <div class="control-guide">
+                <div class="guide-item"><span>WASD</span> Move</div>
+                <div class="guide-item"><span>SHIFT</span> Sprint</div>
+                <div class="guide-item"><span>MOUSE</span> Look</div>
+                <div class="guide-item"><span>F</span> Toggle Flashlight</div>
+            </div>
+
+            <div class="warning-box">
+                ⚠️ HEADPHONES RECOMMENDED. THIS GAME FEATURES PROCEDURAL BINAURAL AUDIO AND JUMP SCARES.
+            </div>
+
+            <button id="start-btn" class="start-button">INITIALIZE FOOTAGE</button>
+        </div>
+    </div>
+
+    <!-- Game Over / Signal Lost Screen -->
+    <div id="game-over-screen" class="menu-container hidden">
+        <div class="menu-content error-state">
+            <h1 class="signal-lost-title">⚠️ SIGNAL LOST</h1>
+            <p class="error-code">ERROR: CAMERA_FEED_TERMINATED</p>
+            <div class="static-bar"></div>
+            <p class="menu-description">
+                Footage recovered: 1996-05-19. Entity contact confirmed. Subject status: Unknown.
+            </p>
+            <button id="restart-btn" class="start-button">RECOVER FEEDS</button>
+        </div>
+    </div>
+
+    <!-- Game scripts imported as ES Modules (cache-busted with version query parameter) -->
+    <script type="module" src="js/main.js?v=1.0.6"></script>
+</body>
+</html>
