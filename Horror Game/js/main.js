@@ -1,10 +1,11 @@
-import { RendererEngine } from './engine/renderer.js?v=1.0.6';
-import { InputManager } from './engine/input.js?v=1.0.6';
-import { AudioEngine } from './game/audio.js?v=1.0.6';
-import { WorldManager } from './game/world.js?v=1.0.6';
-import { Player } from './game/player.js?v=1.0.6';
-import { Flashlight } from './game/flashlight.js?v=1.0.6';
-import { Monster } from './game/monster.js?v=1.0.6';
+import { RendererEngine } from './engine/renderer.js?v=1.0.7';
+import { InputManager } from './engine/input.js?v=1.0.7';
+import { AudioEngine } from './game/audio.js?v=1.0.7';
+import { WorldManager } from './game/world.js?v=1.0.7';
+import { Player } from './game/player.js?v=1.0.7';
+import { Flashlight } from './game/flashlight.js?v=1.0.7';
+import { Monster } from './game/monster.js?v=1.0.7';
+import { GameSettings } from './game/settings.js?v=1.0.7';
 
 /**
  * GameController - Main orchestrator of the Backrooms Horror Game.
@@ -15,8 +16,10 @@ import { Monster } from './game/monster.js?v=1.0.6';
 class GameController {
     constructor() {
         this.state = 'MENU'; // States: MENU, INTRO_WAREHOUSE, INTRO_FALLING, INTRO_GETTING_UP, PLAYING, JUMPSCARE, GAMEOVER
-        this.pausedState = null;
+        this.isPaused = false;
         this.isTransitioningToFall = false;
+
+        this.settings = new GameSettings();
 
         // Core engines
         this.rendererEngine = null;
@@ -86,6 +89,13 @@ class GameController {
 
         // Connect input callbacks
         this.inputManager.onToggleFlashlight = () => this.flashlight.toggle();
+        this.inputManager.onPauseRequest = () => this.togglePause();
+        this.inputManager.baseMouseSensitivity = this.settings.get('mouseSensitivity');
+
+        this.settings.applyTo(this);
+        this.applyReduceEffectsClass();
+        this.syncAllSettingsUI();
+        this.bindSettingsControls();
 
         // Start requestAnimationFrame loop
         this.clock.getDelta(); // Clear initial delta tick
@@ -93,92 +103,231 @@ class GameController {
     }
 
     /**
-     * Binds HTML start/restart buttons and managesPointerLock overrides
+     * Binds HTML start/restart buttons, pause overlay, and settings controls
      */
     bindUI() {
         const startBtn = document.getElementById('start-btn');
         const restartBtn = document.getElementById('restart-btn');
+        const menuSettingsBtn = document.getElementById('menu-settings-btn');
+        const pauseResumeBtn = document.getElementById('pause-resume-btn');
+        const pauseSettingsBtn = document.getElementById('pause-settings-btn');
+        const pauseQuitBtn = document.getElementById('pause-quit-btn');
 
-        // Click to Start
         startBtn.addEventListener('click', () => {
-            // First time click initializes systems
             if (!this.rendererEngine) {
                 this.init();
             }
-
             this.audioEngine.init();
-            
-            // If resuming from a paused state
-            if (this.pausedState) {
-                this.state = this.pausedState;
-                this.pausedState = null;
-                this.inputManager.lock();
-                document.getElementById('menu-screen').classList.add('hidden');
-                return;
-            }
-
-            // Clean up the cached main menu Backrooms chunks before generating warehouse
-            this.world.reset();
-
-            // Start in the procedural abandoned warehouse!
-            this.world.warehouseMode = true;
-            this.player.reset();
-            this.player.position.set(1.6, 0.0, 1.6); // spawn inside warehouse
-            
-            // Flashlight starts ON in warehouse
-            this.flashlight.isOn = true;
-            this.flashlight.battery = 100.0;
-            this.flashlight.updatePosImmediately();
-            
-            // Lock pointer lock for camera mouse looking
-            this.inputManager.lock();
-
-            // Set initial camera facing direction down the corridor (+Z)
-            this.inputManager.yaw = Math.PI;
-            this.inputManager.targetYaw = Math.PI;
-            this.inputManager.pitch = 0.0;
-            this.inputManager.targetPitch = 0.0;
-            
-            // Hide menu overlay
             document.getElementById('menu-screen').classList.add('hidden');
-            this.state = 'INTRO_WAREHOUSE';
+            this.beginNewRun();
         });
 
-        // Click to Recover Feed (Restart after dying)
         restartBtn.addEventListener('click', () => {
             this.resetGame();
-            
-            // Start in the abandoned warehouse!
-            this.world.warehouseMode = true;
-            this.player.reset();
-            this.player.position.set(1.6, 0.0, 1.6);
-            
-            this.flashlight.isOn = true;
-            this.flashlight.battery = 100.0;
-            this.flashlight.updatePosImmediately();
-            
-            this.inputManager.lock();
-
-            // Set initial camera facing direction down the corridor (+Z)
-            this.inputManager.yaw = Math.PI;
-            this.inputManager.targetYaw = Math.PI;
-            this.inputManager.pitch = 0.0;
-            this.inputManager.targetPitch = 0.0;
-            
             document.getElementById('game-over-screen').classList.add('hidden');
-            this.state = 'INTRO_WAREHOUSE';
+            this.beginNewRun();
         });
 
-        // PointerLock Esc pause triggers
-        document.addEventListener('pointerlockchange', () => {
-            if (document.pointerLockElement === null && (this.state === 'PLAYING' || this.state === 'INTRO_WAREHOUSE' || this.state === 'INTRO_GETTING_UP' || this.state === 'INTRO_FALLING')) {
-                // Save state to resume later
-                this.pausedState = this.state;
-                document.getElementById('menu-screen').classList.remove('hidden');
-                document.getElementById('start-btn').innerText = "RESUME FOOTAGE";
-                this.state = 'MENU';
-            }
+        menuSettingsBtn.addEventListener('click', () => {
+            document.getElementById('settings-panel').classList.toggle('hidden');
         });
+
+        pauseResumeBtn.addEventListener('click', () => this.resumeFromPause());
+        pauseSettingsBtn.addEventListener('click', () => {
+            document.getElementById('pause-settings-panel').classList.toggle('hidden');
+        });
+        pauseQuitBtn.addEventListener('click', () => this.quitToMainMenu());
+    }
+
+    isGameplayState() {
+        return this.state === 'PLAYING' ||
+            this.state === 'INTRO_WAREHOUSE' ||
+            this.state === 'INTRO_FALLING' ||
+            this.state === 'INTRO_GETTING_UP';
+    }
+
+    beginNewRun() {
+        this.isPaused = false;
+        this.hidePauseScreen();
+        this.audioEngine.init();
+        this.settings.applyTo(this);
+
+        if (this.settings.get('skipIntro')) {
+            this.startBackroomsGameplay();
+        } else {
+            this.startWarehouseIntro();
+        }
+    }
+
+    startWarehouseIntro() {
+        this.world.reset();
+        this.world.warehouseMode = true;
+        this.player.reset();
+        this.player.position.set(1.6, 0.0, 1.6);
+
+        this.flashlight.isOn = true;
+        this.flashlight.battery = 100.0;
+        this.flashlight.updatePosImmediately();
+
+        this.inputManager.lock();
+        this.inputManager.yaw = Math.PI;
+        this.inputManager.targetYaw = Math.PI;
+        this.inputManager.pitch = 0.0;
+        this.inputManager.targetPitch = 0.0;
+        this.inputManager.disableMouseLook = false;
+
+        this.playtimeElapsed = 0.0;
+        this.state = 'INTRO_WAREHOUSE';
+    }
+
+    startBackroomsGameplay() {
+        this.world.reset();
+        this.world.warehouseMode = false;
+        this.player.reset();
+        this.monster.reset();
+
+        this.flashlight.isOn = true;
+        this.flashlight.battery = 100.0;
+        this.flashlight.updatePosImmediately();
+
+        this.inputManager.reset();
+        this.inputManager.disableMouseLook = false;
+        this.inputManager.lock();
+
+        this.playtimeElapsed = 0.0;
+        this.isTransitioningToFall = false;
+        this.landingShakeIntensity = 0.0;
+        this.landingShakeTimer = 0.0;
+        this.state = 'PLAYING';
+    }
+
+    togglePause() {
+        if (this.isPaused) {
+            this.resumeFromPause();
+        } else if (this.isGameplayState()) {
+            this.pauseGame();
+        }
+    }
+
+    pauseGame() {
+        if (!this.isGameplayState() || this.isPaused) return;
+
+        this.isPaused = true;
+        this.inputManager.unlock();
+        document.getElementById('pause-screen').classList.remove('hidden');
+        document.getElementById('pause-settings-panel').classList.add('hidden');
+    }
+
+    resumeFromPause() {
+        if (!this.isPaused) return;
+
+        this.isPaused = false;
+        this.hidePauseScreen();
+
+        if (this.isGameplayState()) {
+            this.inputManager.lock();
+        }
+    }
+
+    hidePauseScreen() {
+        const pauseScreen = document.getElementById('pause-screen');
+        if (pauseScreen) {
+            pauseScreen.classList.add('hidden');
+        }
+        const pauseSettings = document.getElementById('pause-settings-panel');
+        if (pauseSettings) {
+            pauseSettings.classList.add('hidden');
+        }
+    }
+
+    quitToMainMenu() {
+        this.isPaused = false;
+        this.hidePauseScreen();
+        this.inputManager.unlock();
+        this.inputManager.reset();
+        this.state = 'MENU';
+        document.getElementById('menu-screen').classList.remove('hidden');
+        document.getElementById('settings-panel').classList.add('hidden');
+    }
+
+    applyReduceEffectsClass() {
+        document.body.classList.toggle('reduce-effects', this.settings.get('reduceEffects'));
+    }
+
+    bindSettingsControls() {
+        this.bindSettingsPanel('', 'setting');
+        this.bindSettingsPanel('pause-', 'pause-setting');
+    }
+
+    bindSettingsPanel(prefix, idPrefix) {
+        const volume = document.getElementById(`${idPrefix}-volume`);
+        const sensitivity = document.getElementById(`${idPrefix}-sensitivity`);
+        const reduceEffects = document.getElementById(`${idPrefix}-reduce-effects`);
+        const skipIntro = document.getElementById(`${idPrefix}-skip-intro`);
+
+        if (!volume) return;
+
+        volume.addEventListener('input', () => {
+            const val = Number(volume.value) / 100;
+            this.settings.set('masterVolume', val);
+            this.settings.applyTo(this);
+            this.syncAllSettingsUI();
+        });
+
+        sensitivity.addEventListener('input', () => {
+            const pct = Number(sensitivity.value) / 100;
+            this.settings.set('mouseSensitivity', this.inputManager.baseMouseSensitivity * pct);
+            this.settings.applyTo(this);
+            this.syncAllSettingsUI();
+        });
+
+        reduceEffects.addEventListener('change', () => {
+            this.settings.set('reduceEffects', reduceEffects.checked);
+            this.applyReduceEffectsClass();
+            this.syncAllSettingsUI();
+        });
+
+        skipIntro.addEventListener('change', () => {
+            this.settings.set('skipIntro', skipIntro.checked);
+            this.syncAllSettingsUI();
+        });
+    }
+
+    syncAllSettingsUI() {
+        this.syncSettingsPanel('', 'setting');
+        this.syncSettingsPanel('pause-', 'pause-setting');
+    }
+
+    syncSettingsPanel(prefix, idPrefix) {
+        const volume = document.getElementById(`${idPrefix}-volume`);
+        const volumeVal = document.getElementById(`${idPrefix}-volume-val`);
+        const sensitivity = document.getElementById(`${idPrefix}-sensitivity`);
+        const sensitivityVal = document.getElementById(`${idPrefix}-sensitivity-val`);
+        const reduceEffects = document.getElementById(`${idPrefix}-reduce-effects`);
+        const skipIntro = document.getElementById(`${idPrefix}-skip-intro`);
+
+        if (!volume) return;
+
+        const volPct = Math.round(this.settings.get('masterVolume') * 100);
+        volume.value = String(volPct);
+        if (volumeVal) volumeVal.innerText = `${volPct}%`;
+
+        const sensPct = Math.round(
+            (this.settings.get('mouseSensitivity') / this.inputManager.baseMouseSensitivity) * 100
+        );
+        sensitivity.value = String(Math.max(25, Math.min(200, sensPct)));
+        if (sensitivityVal) sensitivityVal.innerText = `${sensPct}%`;
+
+        reduceEffects.checked = this.settings.get('reduceEffects');
+        skipIntro.checked = this.settings.get('skipIntro');
+    }
+
+    getEffectsMultiplier() {
+        return this.settings.getEffectsMultiplier();
+    }
+
+    scalePanic(level) {
+        return level * this.getEffectsMultiplier();
     }
 
     /**
@@ -258,6 +407,18 @@ class GameController {
 
         // 3. State-aware Updates
         let currentPanic = 0.0;
+        const effectsMult = this.getEffectsMultiplier();
+
+        if (this.monster) {
+            this.monster.effectsMultiplier = effectsMult;
+        }
+
+        if (this.isPaused) {
+            if (this.rendererEngine) {
+                this.rendererEngine.render(this.totalTime, 0.0);
+            }
+            return;
+        }
 
         if (this.state === 'PLAYING') {
             this.playtimeElapsed += dt;
@@ -278,7 +439,7 @@ class GameController {
 
             // Stalker bacteria movements
             this.monster.update(dt, this.totalTime, false);
-            currentPanic = this.monster.isActive ? this.monster.audio.panicLevel : 0.0;
+            currentPanic = this.monster.isActive ? this.scalePanic(this.monster.audio.panicLevel) : 0.0;
 
             // 2. Flashlight battery collection collision check
             for (let i = this.world.activeBatteries.length - 1; i >= 0; i--) {
@@ -637,7 +798,7 @@ class GameController {
                 this.audioEngine.playPlayerLandingSpeech();
 
                 // Trigger violent, decaying visual camera shake
-                this.landingShakeIntensity = 0.55;
+                this.landingShakeIntensity = 0.55 * effectsMult;
                 this.landingShakeTimer = 1.2;
 
                 // Flashlight electrical spark flicker
@@ -674,7 +835,7 @@ class GameController {
 
         } else if (this.state === 'JUMPSCARE') {
             // Shake camera violently during jumpscare face-time
-            const shakeIntensity = 0.08;
+            const shakeIntensity = 0.08 * effectsMult;
             this.rendererEngine.camera.position.x += (Math.random() - 0.5) * shakeIntensity;
             this.rendererEngine.camera.position.y += (Math.random() - 0.5) * shakeIntensity;
             this.rendererEngine.camera.position.z += (Math.random() - 0.5) * shakeIntensity;
@@ -685,7 +846,7 @@ class GameController {
 
             // Spasm monster limbs
             this.monster.update(dt, this.totalTime, true);
-            currentPanic = 1.0; // max panic screen glitching shader triggers
+            currentPanic = this.scalePanic(1.0);
         }
 
         // Apply dynamic camera shake decayer on landing impacts (overlayed on top of player tracking)
@@ -746,6 +907,55 @@ class GameController {
                 modeElement.innerText = "SIGNAL LOST";
             }
         }
+
+        this.updateObjectiveHint();
+    }
+
+    /**
+     * Shows contextual survival hints on the viewfinder HUD
+     */
+    updateObjectiveHint() {
+        const hintEl = document.getElementById('objective-hint');
+        const textEl = document.getElementById('objective-text');
+        const iconEl = document.getElementById('objective-icon');
+        if (!hintEl || !textEl || !iconEl) return;
+
+        const showStates = this.state === 'PLAYING' || this.state === 'INTRO_GETTING_UP';
+        if (!showStates || this.isPaused) {
+            hintEl.classList.add('hidden');
+            return;
+        }
+
+        hintEl.classList.remove('hidden', 'pulse', 'danger');
+
+        let text = 'SURVIVE';
+        let icon = '▲';
+        let pulse = false;
+        let danger = false;
+
+        if (this.flashlight && this.flashlight.battery < 20.0) {
+            text = 'FIND POWER';
+            icon = '⚡';
+            pulse = true;
+        }
+
+        if (this.monster && this.monster.isActive) {
+            const dx = this.player.position.x - this.monster.position.x;
+            const dz = this.player.position.z - this.monster.position.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+
+            if (dist < this.monster.panicDist * 0.85) {
+                text = 'AVOID IT';
+                icon = '◆';
+                danger = true;
+                pulse = dist < this.monster.panicDist * 0.5;
+            }
+        }
+
+        textEl.innerText = text;
+        iconEl.innerText = icon;
+        if (pulse) hintEl.classList.add('pulse');
+        if (danger) hintEl.classList.add('danger');
     }
 }
 

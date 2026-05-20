@@ -35,6 +35,9 @@ export class Monster {
         // PRE-ALLOCATED VECTORS FOR ZERO-ALLOCATION RENDER LOOP RUNNING
         this.toPlayer = new THREE.Vector3();
         this.camDir = new THREE.Vector3();
+
+        // Scales panic visuals/audio when accessibility "reduce effects" is on
+        this.effectsMultiplier = 1.0;
     }
 
     /**
@@ -205,13 +208,14 @@ export class Monster {
         if (!isGameOver) {
             // A. Calculate dynamic panic curve (0.0 to 1.0)
             if (dist < this.panicDist) {
-                const panicFactor = 1.0 - (dist / this.panicDist);
+                const panicFactor = (1.0 - (dist / this.panicDist)) * this.effectsMultiplier;
                 this.audio.setPanicLevel(panicFactor);
                 
                 // Add CRT screen glitch overlay intensity based on panic
                 const glitchOverlay = document.getElementById('glitch-overlay');
                 if (glitchOverlay) {
-                    glitchOverlay.className = panicFactor > 0.3 ? 'glitching' : '';
+                    const glitchThreshold = 0.3 + (1.0 - this.effectsMultiplier) * 0.45;
+                    glitchOverlay.className = panicFactor > glitchThreshold ? 'glitching' : '';
                     glitchOverlay.style.background = `rgba(255, 0, 0, ${panicFactor * 0.12})`;
                 }
             } else {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE BACKROOMS - Found Footage</title>
-    <link rel="stylesheet" href="css/style.css?v=1.0.6">
+    <link rel="stylesheet" href="css/style.css?v=1.0.7">
     <!-- Google Fonts for retro/camcorder look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,6 +49,11 @@
                 <div id="vhs-date" class="vhs-text">MAY 19 2026</div>
                 <div class="vhs-text">F/1.8</div>
             </div>
+
+            <div id="objective-hint" class="objective-hint hidden" aria-live="polite">
+                <span id="objective-icon" class="objective-icon">▲</span>
+                <span id="objective-text">SURVIVE</span>
+            </div>
             
             <!-- Vignette visual vignette -->
             <div class="vignette"></div>
@@ -76,13 +81,73 @@
                 <div class="guide-item"><span>SHIFT</span> Sprint</div>
                 <div class="guide-item"><span>MOUSE</span> Look</div>
                 <div class="guide-item"><span>F</span> Toggle Flashlight</div>
+                <div class="guide-item"><span>ESC</span> Pause</div>
             </div>
 
             <div class="warning-box">
                 ⚠️ HEADPHONES RECOMMENDED. THIS GAME FEATURES PROCEDURAL BINAURAL AUDIO AND JUMP SCARES.
             </div>
 
-            <button id="start-btn" class="start-button">INITIALIZE FOOTAGE</button>
+            <div id="settings-panel" class="settings-panel hidden">
+                <h3 class="settings-heading">CAMERA SETTINGS</h3>
+                <label class="settings-row">
+                    <span>Master volume</span>
+                    <input type="range" id="setting-volume" min="0" max="100" value="50">
+                    <span id="setting-volume-val" class="settings-value">50%</span>
+                </label>
+                <label class="settings-row">
+                    <span>Mouse sensitivity</span>
+                    <input type="range" id="setting-sensitivity" min="25" max="200" value="100">
+                    <span id="setting-sensitivity-val" class="settings-value">100%</span>
+                </label>
+                <label class="settings-check">
+                    <input type="checkbox" id="setting-reduce-effects">
+                    <span>Reduce camera shake &amp; screen glitch</span>
+                </label>
+                <label class="settings-check">
+                    <input type="checkbox" id="setting-skip-intro">
+                    <span>Skip intro (warehouse &amp; fall)</span>
+                </label>
+            </div>
+
+            <div class="menu-actions">
+                <button id="start-btn" class="start-button">INITIALIZE FOOTAGE</button>
+                <button id="menu-settings-btn" type="button" class="secondary-button">SETTINGS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- In-game pause (ESC) — does not return to main menu -->
+    <div id="pause-screen" class="pause-container hidden">
+        <div class="pause-content">
+            <h2 class="pause-title">PAUSED</h2>
+            <p class="pause-subtitle">FEED ON HOLD</p>
+            <div class="pause-actions">
+                <button id="pause-resume-btn" class="start-button">RESUME FOOTAGE</button>
+                <button id="pause-settings-btn" type="button" class="secondary-button">SETTINGS</button>
+                <button id="pause-quit-btn" type="button" class="secondary-button danger">QUIT TO MENU</button>
+            </div>
+            <div id="pause-settings-panel" class="settings-panel hidden">
+                <h3 class="settings-heading">CAMERA SETTINGS</h3>
+                <label class="settings-row">
+                    <span>Master volume</span>
+                    <input type="range" id="pause-setting-volume" min="0" max="100" value="50">
+                    <span id="pause-setting-volume-val" class="settings-value">50%</span>
+                </label>
+                <label class="settings-row">
+                    <span>Mouse sensitivity</span>
+                    <input type="range" id="pause-setting-sensitivity" min="25" max="200" value="100">
+                    <span id="pause-setting-sensitivity-val" class="settings-value">100%</span>
+                </label>
+                <label class="settings-check">
+                    <input type="checkbox" id="pause-setting-reduce-effects">
+                    <span>Reduce camera shake &amp; screen glitch</span>
+                </label>
+                <label class="settings-check">
+                    <input type="checkbox" id="pause-setting-skip-intro">
+                    <span>Skip intro (warehouse &amp; fall)</span>
+                </label>
+            </div>
         </div>
     </div>
 
@@ -100,6 +165,6 @@
     </div>
 
     <!-- Game scripts imported as ES Modules (cache-busted with version query parameter) -->
-    <script type="module" src="js/main.js?v=1.0.6"></script>
+    <script type="module" src="js/main.js?v=1.0.7"></script>
 </body>
 </html>

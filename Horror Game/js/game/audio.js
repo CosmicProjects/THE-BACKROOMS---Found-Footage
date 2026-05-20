@@ -1062,6 +1062,16 @@ export class AudioEngine {
     }
 
     /**
+     * Adjusts master output volume (0.0 to 1.0)
+     */
+    setMasterVolume(level) {
+        const clamped = Math.max(0.0, Math.min(1.0, level));
+        if (this.masterVolume && this.ctx) {
+            this.masterVolume.gain.setValueAtTime(clamped, this.ctx.currentTime);
+        }
+    }
+
+    /**
      * Stop and cleanup all audio processes
      */
     stop() {

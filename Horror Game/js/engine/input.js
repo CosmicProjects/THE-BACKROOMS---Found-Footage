@@ -32,6 +32,9 @@ export class InputManager {
 
         // Custom shortcut callbacks (e.g. toggle flashlight)
         this.onToggleFlashlight = null;
+        this.onPauseRequest = null;
+
+        this.baseMouseSensitivity = 0.0022;
 
         // Bind events
         this.bindEvents();
@@ -99,6 +102,13 @@ export class InputManager {
     }
 
     handleKeyDown(e) {
+        if (e.code === 'Escape') {
+            if (this.onPauseRequest) {
+                this.onPauseRequest();
+            }
+            return;
+        }
+
         if (!this.isLocked) return;
 
         switch (e.code) {
